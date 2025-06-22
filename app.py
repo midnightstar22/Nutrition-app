@@ -1,64 +1,38 @@
 import streamlit as st
+import tensorflow as tf
 from PIL import Image
 import numpy as np
-import tensorflow as tf
-from nutritionix import get_nutrition_info  # You must define or import this
-import io
 
-# Load trained model
-model = tf.keras.models.load_model("food11_mobilenetv2.h5")  # Adjust path if needed
+# Load model
+model = tf.keras.models.load_model("food11_mobilenetv2.h5")
 
-# Food11 class labels
-class_names = {
-    0: "Dairy products",
-    1: "Desserts",
-    2: "Egg dishes",
-    3: "Fried food",
-    4: "Meat",
-    5: "Noodles/Pasta",
-    6: "Rice",
-    7: "Seafoods",
-    8: "Soup",
-    9: "Vegetables/Fruit",
-    10: "Other food"
-}
+# Map class indices to actual food labels
+class_names = [
+    "Bread", "Dairy product", "Dessert", "Egg", "Fried food",
+    "Meat", "Noodles-Pasta", "Rice", "Seafood", "Soup", "Vegetable-Fruit"
+]
 
-# Streamlit app layout
-st.title("🍽️ Nutrition App - Food11 Classifier")
-st.write("Upload a food image to identify its category and see nutrition info.")
+# Title
+st.title("🍽️ Food Image Classifier (Food11)")
 
 # Upload image
-uploaded_file = st.file_uploader("Choose a food image", type=["jpg", "jpeg", "png"])
+uploaded_file = st.file_uploader("Upload a food image", type=["jpg", "jpeg", "png"])
 
 if uploaded_file is not None:
-    image = Image.open(uploaded_file).resize((224, 224)).convert("RGB")
-    st.image(image, caption="Uploaded Image", use_column_width=True)
+    img = Image.open(uploaded_file).convert('RGB')
+    st.image(img, caption='Uploaded Image', use_column_width=True)
 
-    # Preprocess the image
-    img_array = np.array(image) / 255.0
+    # Preprocess image
+    img = img.resize((160, 160))
+    img_array = np.array(img) / 255.0
     img_array = np.expand_dims(img_array, axis=0)
 
-    # Predict class
-    predictions = model.predict(img_array)
-    class_index = int(np.argmax(predictions))
-    confidence = float(predictions[0][class_index])
-    class_label = class_names[class_index]
+    # Predict
+    prediction = model.predict(img_array)
+    predicted_class_index = np.argmax(prediction)
+    predicted_label = class_names[predicted_class_index]
 
-    # Display result
-    st.info(f"🔢 Class Index: {class_index}")
-    st.success(f"🍲 Predicted Food Category: **{class_label}**")
-    st.write(f"📊 Confidence: {confidence * 100:.2f}%")
-
-    # Fetch nutrition info (optional)
-    with st.spinner("Fetching nutrition info..."):
-        nutrition = get_nutrition_info(class_label)
-
-    if "foods" in nutrition:
-        food_info = nutrition["foods"][0]
-        st.subheader("🧪 Nutrition Facts (per serving)")
-        st.write(f"**Calories:** {food_info['nf_calories']} kcal")
-        st.write(f"**Carbs:** {food_info['nf_total_carbohydrate']} g")
-        st.write(f"**Protein:** {food_info['nf_protein']} g")
-        st.write(f"**Fat:** {food_info['nf_total_fat']} g")
-    else:
-        st.warning("⚠️ Couldn't fetch detailed nutrition data.")
+    st.subheader(f"🍜 Predicted Class: `{predicted_label}`")
+    st.write("🔍 Confidence Scores:")
+    for i, score in enumerate(prediction[0]):
+        st.write(f"{class_names[i]}: {score:.2f}")
