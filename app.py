@@ -1,10 +1,12 @@
-import os
+import streamlit as st
+from PIL import Image
 import numpy as np
 import tensorflow as tf
-from tensorflow.keras.preprocessing import image
+from nutritionix import get_nutrition_info  # You must define or import this
+import io
 
-# Suppress TensorFlow logs
-os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'
+# Load trained model
+model = tf.keras.models.load_model("food11_mobilenetv2.h5")  # Adjust path if needed
 
 # Food11 class labels
 class_names = {
@@ -21,18 +23,42 @@ class_names = {
     10: "Other food"
 }
 
-# Load your trained model
-model = tf.keras.models.load_model("food11_mobilenetv2.h5")  # <- change this to your actual model path
+# Streamlit app layout
+st.title("🍽️ Nutrition App - Food11 Classifier")
+st.write("Upload a food image to identify its category and see nutrition info.")
 
-# Load and preprocess the image
-img_path = "your_test_image.jpg"  # <- replace with your test image path
-img = image.load_img(img_path, target_size=(224, 224))  # adjust size to match your model
-img_array = image.img_to_array(img) / 255.0  # normalize
-img_array = np.expand_dims(img_array, axis=0)  # add batch dimension
+# Upload image
+uploaded_file = st.file_uploader("Choose a food image", type=["jpg", "jpeg", "png"])
 
-# Make prediction
-predictions = model.predict(img_array)
-predicted_class = np.argmax(predictions[0])
+if uploaded_file is not None:
+    image = Image.open(uploaded_file).resize((224, 224)).convert("RGB")
+    st.image(image, caption="Uploaded Image", use_column_width=True)
 
-# Print food label
-print(f"Predicted class: {predicted_class} ({class_names[predicted_class]})")
+    # Preprocess the image
+    img_array = np.array(image) / 255.0
+    img_array = np.expand_dims(img_array, axis=0)
+
+    # Predict class
+    predictions = model.predict(img_array)
+    class_index = int(np.argmax(predictions))
+    confidence = float(predictions[0][class_index])
+    class_label = class_names[class_index]
+
+    # Display result
+    st.info(f"🔢 Class Index: {class_index}")
+    st.success(f"🍲 Predicted Food Category: **{class_label}**")
+    st.write(f"📊 Confidence: {confidence * 100:.2f}%")
+
+    # Fetch nutrition info (optional)
+    with st.spinner("Fetching nutrition info..."):
+        nutrition = get_nutrition_info(class_label)
+
+    if "foods" in nutrition:
+        food_info = nutrition["foods"][0]
+        st.subheader("🧪 Nutrition Facts (per serving)")
+        st.write(f"**Calories:** {food_info['nf_calories']} kcal")
+        st.write(f"**Carbs:** {food_info['nf_total_carbohydrate']} g")
+        st.write(f"**Protein:** {food_info['nf_protein']} g")
+        st.write(f"**Fat:** {food_info['nf_total_fat']} g")
+    else:
+        st.warning("⚠️ Couldn't fetch detailed nutrition data.")
