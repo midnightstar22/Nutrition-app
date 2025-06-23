@@ -51,6 +51,9 @@ if 'analyzing' not in st.session_state:
 
 # Header
 st.markdown("""<style>
+body{
+    background-color: #FFFCFB;
+    }
 .main-header {
   font-size: 3rem;
   font-weight: bold;
