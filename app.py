@@ -52,13 +52,16 @@ if 'analyzing' not in st.session_state:
 # Header
 st.markdown("""<style>
 .main-header {
-    text-align: center;
-    padding: 2rem 0;
-    background: linear-gradient(135deg, #10b981, #f59e0b);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    font-size: 3rem;
-    font-weight: bold;
+  font-size: 3rem;
+  font-weight: bold;
+  text-align: left;
+  padding: 2rem 0;
+  
+  background: linear-gradient(135deg, #ff5722, #ff9800, #ffc107, #fff176);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  color: transparent;
 }
 .subtitle {
     text-align: center;
