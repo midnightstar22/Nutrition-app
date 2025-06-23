@@ -69,7 +69,7 @@ body{
 .subtitle {
     text-align: center;
     color: #6b7280;
-    font-size: 1.2rem;
+    font-size: 2rem;
     margin-bottom: 2rem;
 }
 .analyzing-text {
