@@ -7,25 +7,21 @@ import requests
 import os
 from dotenv import load_dotenv
 
-# Load environment variables from .env
 load_dotenv()
 APP_ID = os.getenv("NUTRITIONIX_APP_ID")
 API_KEY = os.getenv("NUTRITIONIX_API_KEY")
 
-# Load model
 @st.cache_resource
 def load_model():
     return tf.keras.models.load_model("food11_mobilenetv2.h5")
 
 model = load_model()
 
-# Food11 class names
 class_names = [
     "Bread", "Dairy product", "Dessert", "Egg", "Fried food",
     "Meat", "Noodles-Pasta", "Rice", "Seafood", "Soup", "Vegetable-Fruit"
 ]
 
-# Optional: map vague labels to more recognizable food names
 query_map = {
     "Bread": "whole wheat bread",
     "Dairy product": "milk",
@@ -40,7 +36,6 @@ query_map = {
     "Vegetable-Fruit": "salad"
 }
 
-# Streamlit page setup
 st.set_page_config(page_title="🍎 NutriScan", page_icon="🍽️", layout="wide")
 if 'uploaded_image' not in st.session_state:
     st.session_state.uploaded_image = None
@@ -49,7 +44,6 @@ if 'nutrition_data' not in st.session_state:
 if 'analyzing' not in st.session_state:
     st.session_state.analyzing = False
 
-# Header
 st.markdown("""<style>
 body{
     background-color: #FFFCFB;
@@ -88,7 +82,6 @@ body{
 st.markdown('<h1 class="main-header">🍎 NutriScan</h1>', unsafe_allow_html=True)
 st.markdown('<p class="subtitle">📸 Upload or capture a food image and get real nutrition insights using AI and Nutritionix API</p>', unsafe_allow_html=True)
 
-# Upload section
 if not st.session_state.uploaded_image:
     uploaded_file = st.file_uploader("📁 Upload a food image", type=["jpg", "jpeg", "png"])
     camera_image = st.camera_input("📷 Or take a photo")
@@ -102,7 +95,6 @@ if not st.session_state.uploaded_image:
         st.session_state.analyzing = True
         st.rerun()
 
-# Prediction & Nutrition
 if st.session_state.uploaded_image:
     col1, col2 = st.columns(2)
 
@@ -122,14 +114,12 @@ if st.session_state.uploaded_image:
                 time.sleep(0.01)
                 progress_bar.progress(i + 1)
 
-            # Predict
             resized = image.resize((160, 160))
             array = np.expand_dims(np.array(resized) / 255.0, axis=0)
             pred_index = int(np.argmax(model.predict(array)))
             pred_label = class_names[pred_index]
             query_text = query_map.get(pred_label, pred_label)
 
-            # Nutritionix API call
             headers = {
                 "x-app-id": APP_ID,
                 "x-app-key": API_KEY,
@@ -183,7 +173,6 @@ if st.session_state.uploaded_image:
             st.metric("Sodium", f"{data['sodium']} mg")
             st.success("✅ Nutrition data retrieved successfully!")
 
-# Footer
 st.markdown("---")
 st.markdown("""<div style="text-align: center; color: #888;">
 © 2024 NutriScan · AI + Nutritionix API
